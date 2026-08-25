@@ -13,8 +13,11 @@ from __future__ import annotations
 
 import os
 
+from dotenv import load_dotenv
+from langchain_core.language_models.chat_models import BaseChatModel
 
-def get_llm(model: str | None = None, temperature: float = 0.0):
+
+def get_llm(model: str | None = None, temperature: float = 0.0) -> BaseChatModel:
     """Create an LLM client from environment configuration.
 
     Checks for API keys in this order:
@@ -24,6 +27,10 @@ def get_llm(model: str | None = None, temperature: float = 0.0):
 
     Override model with the `model` parameter or LLM_MODEL env var.
     """
+    # Keep secrets outside source control while making the documented `.env`
+    # workflow work for the CLI, tests, and direct module use.
+    load_dotenv()
+
     if os.getenv("GEMINI_API_KEY"):
         try:
             from langchain_google_genai import ChatGoogleGenerativeAI
@@ -37,7 +44,7 @@ def get_llm(model: str | None = None, temperature: float = 0.0):
 
     if os.getenv("OPENAI_API_KEY"):
         try:
-            from langchain_openai import ChatOpenAI
+            from langchain_openai import ChatOpenAI  # type: ignore[import-not-found]
         except ImportError as exc:
             raise RuntimeError("Install: pip install langchain-openai") from exc
         return ChatOpenAI(
@@ -47,7 +54,7 @@ def get_llm(model: str | None = None, temperature: float = 0.0):
 
     if os.getenv("ANTHROPIC_API_KEY"):
         try:
-            from langchain_anthropic import ChatAnthropic
+            from langchain_anthropic import ChatAnthropic  # type: ignore[import-not-found]
         except ImportError as exc:
             raise RuntimeError("Install: pip install langchain-anthropic") from exc
         return ChatAnthropic(

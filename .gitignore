@@ -10,6 +10,8 @@ build/
 .venv/
 venv/
 env/
+.uv-cache/
+.test-cache/
 
 # IDE
 .idea/

@@ -1,7 +1,6 @@
 """Graph smoke tests.
 
-These tests verify end-to-end graph execution. They will fail with NotImplementedError
-until you implement nodes, routing, and graph wiring.
+These tests verify end-to-end graph execution against a configured real LLM.
 
 Note: These tests require a configured LLM (OPENAI_API_KEY or ANTHROPIC_API_KEY)
 because classify_node and answer_node use real LLM calls.
@@ -18,8 +17,12 @@ pytestmark = [
         reason="langgraph not installed",
     ),
     pytest.mark.skipif(
-        not os.getenv("GEMINI_API_KEY") and not os.getenv("OPENAI_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"),
-        reason="No LLM API key configured (set GEMINI_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY)",
+        not os.getenv("GEMINI_API_KEY")
+        and not os.getenv("OPENAI_API_KEY")
+        and not os.getenv("ANTHROPIC_API_KEY"),
+        reason=(
+            "No LLM API key configured (set GEMINI_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY)"
+        ),
     ),
 ]
 

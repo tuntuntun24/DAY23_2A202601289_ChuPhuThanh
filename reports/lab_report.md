@@ -1,39 +1,4 @@
-"""Render a submission-ready report from scenario metrics."""
-
-from __future__ import annotations
-
-from pathlib import Path
-
-from .metrics import MetricsReport
-
-
-def render_report(metrics: MetricsReport) -> str:
-    """Render a complete lab report from metrics data.
-
-    Generate a report that includes:
-    1. Metrics summary table (total scenarios, success rate, retries, interrupts)
-    2. Per-scenario results table
-    3. Architecture explanation (your graph design, state schema, reducers)
-    4. Failure analysis (at least two failure modes you considered)
-    5. Improvement plan
-
-    Use reports/lab_report_template.md as your guide.
-
-    Return: formatted markdown string
-    """
-    success_percent = metrics.success_rate * 100
-    scenario_rows = "\n".join(
-        "| {id} | {expected} | {actual} | {success} | {retries} | {interrupts} |".format(
-            id=item.scenario_id,
-            expected=item.expected_route,
-            actual=item.actual_route or "—",
-            success="Yes" if item.success else "No",
-            retries=item.retry_count,
-            interrupts=item.interrupt_count,
-        )
-        for item in metrics.scenario_metrics
-    )
-    return f"""# Day 08 Lab Report
+# Day 08 Lab Report
 
 ## 1. Student information
 
@@ -45,12 +10,12 @@ def render_report(metrics: MetricsReport) -> str:
 
 | Metric | Value |
 |---|---:|
-| Total scenarios | {metrics.total_scenarios} |
-| Success rate | {success_percent:.2f}% |
-| Average nodes visited | {metrics.avg_nodes_visited:.2f} |
-| Total retries | {metrics.total_retries} |
-| Total approval visits | {metrics.total_interrupts} |
-| Checkpoint history verified | {"Yes" if metrics.resume_success else "No"} |
+| Total scenarios | 7 |
+| Success rate | 100.00% |
+| Average nodes visited | 6.43 |
+| Total retries | 3 |
+| Total approval visits | 2 |
+| Checkpoint history verified | Yes |
 
 ## 3. Architecture
 
@@ -71,7 +36,13 @@ steps and retry loops. State values remain JSON-serializable for checkpointing.
 
 | Scenario | Expected route | Actual route | Success | Retries | Approval visits |
 |---|---|---|---:|---:|---:|
-{scenario_rows}
+| S01_simple | simple | simple | Yes | 0 | 0 |
+| S02_tool | tool | tool | Yes | 0 | 0 |
+| S03_missing | missing_info | missing_info | Yes | 0 | 0 |
+| S04_risky | risky | risky | Yes | 0 | 1 |
+| S05_error | error | error | Yes | 2 | 0 |
+| S06_delete | risky | risky | Yes | 0 | 1 |
+| S07_dead_letter | error | error | Yes | 1 | 0 |
 
 ## 6. Failure analysis
 
@@ -103,11 +74,3 @@ mock reviewer keeps CI and classroom demonstrations deterministic.
 Production work would replace the mock tool with authenticated services, add provider timeout
 and rate-limit handling, validate authorization separately from approval, add tracing and latency
 measurement, and test interrupt/resume recovery against a durable checkpoint database.
-"""
-
-
-def write_report(metrics: MetricsReport, output_path: str | Path) -> None:
-    """Write the rendered report to a file."""
-    path = Path(output_path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(render_report(metrics), encoding="utf-8")

@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-from typing import Any
+import sqlite3
+from pathlib import Path
+
+from langgraph.types import Checkpointer
 
 
-def build_checkpointer(kind: str = "memory", database_url: str | None = None) -> Any | None:
+def build_checkpointer(kind: str = "memory", database_url: str | None = None) -> Checkpointer:
     """Return a LangGraph checkpointer.
 
-    TODO(student): implement SQLite support for the persistence extension track.
-    The starter provides MemorySaver only — SQLite/Postgres are extension tasks.
+    Memory, SQLite, and Postgres backends are supported.
 
     For SQLite:
     - pip install langgraph-checkpoint-sqlite
@@ -23,12 +25,30 @@ def build_checkpointer(kind: str = "memory", database_url: str | None = None) ->
 
         return MemorySaver()
     if kind == "sqlite":
-        raise NotImplementedError(
-            "TODO(student): implement SQLite checkpointer. "
-            "Hint: pip install langgraph-checkpoint-sqlite, then use SqliteSaver"
-        )
+        from langgraph.checkpoint.sqlite import SqliteSaver
+
+        database_path = database_url or "checkpoints.db"
+        if database_path.startswith("sqlite:///"):
+            database_path = database_path.removeprefix("sqlite:///")
+        path = Path(database_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        connection = sqlite3.connect(path, check_same_thread=False)
+        connection.execute("PRAGMA journal_mode=WAL")
+        saver = SqliteSaver(conn=connection)
+        saver.setup()
+        return saver
     if kind == "postgres":
-        raise NotImplementedError(
-            "TODO(student): implement Postgres checkpointer (optional extension)"
-        )
+        if not database_url:
+            raise ValueError("database_url is required for the Postgres checkpointer")
+        try:
+            import psycopg  # type: ignore[import-not-found]
+            from langgraph.checkpoint.postgres import (  # type: ignore[import-not-found]
+                PostgresSaver,
+            )
+        except ImportError as exc:
+            raise RuntimeError("Install the project with the 'postgres' extra") from exc
+        connection = psycopg.connect(database_url, autocommit=True, prepare_threshold=0)
+        saver = PostgresSaver(conn=connection)
+        saver.setup()
+        return saver
     raise ValueError(f"Unknown checkpointer kind: {kind}")

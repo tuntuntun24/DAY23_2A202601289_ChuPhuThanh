@@ -1,10 +1,7 @@
 """Routing function tests.
 
-These tests verify correct routing logic. They will fail with NotImplementedError
-until you implement the routing functions in routing.py.
+These tests verify the completed conditional-routing logic.
 """
-
-import pytest
 
 from langgraph_agent_lab.routing import (
     route_after_approval,
